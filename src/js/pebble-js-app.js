@@ -14,7 +14,7 @@ Pebble.addEventListener("webviewclosed", function(e) {
   console.log("configuration closed");
   // webview closed
   var options = JSON.parse(decodeURIComponent(e.response));
-  var transactionId = Pebble.sendAppMessage( { "0": options.CellNum },
+  var transactionId = Pebble.sendAppMessage( { "CellNum": options.CellNum },
 	  function(e) {
 	    console.log("Successfully delivered message with transactionId="
 	      + e.data.transactionId);

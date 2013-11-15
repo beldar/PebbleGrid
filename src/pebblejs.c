@@ -9,6 +9,15 @@ int CellNum;
 #define CELLNUM_KEY 0
 #define CELLNUM_DEFAULT 2
 
+int my_atoi(char *p) {
+ int k = 0;
+ while (*p) {
+   k = (k<<3)+(k<<1)+(*p)-'0';
+   p++;
+ }
+ return k;
+}
+
 void out_sent_handler(DictionaryIterator *sent, void *context) {
  // outgoing message was delivered
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Success to send message");
@@ -23,10 +32,14 @@ void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, voi
 
 void in_received_handler(DictionaryIterator *received, void *context) {
  // incoming message received
-  Tuple *int_tuple = dict_find(received, 0);
+  Tuple *int_tuple = dict_find(received, CELLNUM_KEY);
+  int cn;
 
   if (int_tuple) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Message received: %d", int_tuple->value->uint8);
+    cn =  my_atoi(int_tuple->value->cstring);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Message received: %d", cn);
+    CellNum = cn;
+    persist_write_int(CELLNUM_KEY, cn);
   }
 }
 
@@ -118,21 +131,21 @@ void handle_deinit(void) {
 }
 
 void handle_init(void) {
-  window = window_create();
-  window_stack_push(window, true /* Animated */);
-  window_set_background_color(window, GColorBlack);
-
   app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
   app_message_register_outbox_sent(out_sent_handler);
   app_message_register_outbox_failed(out_failed_handler);
 
+  
+
+  window = window_create();
+  window_stack_push(window, true /* Animated */);
+  window_set_background_color(window, GColorBlack);
+  Layer *window_layer = window_get_root_layer(window);
+
   const uint32_t inbound_size = 64;
   const uint32_t outbound_size = 64;
   app_message_open(inbound_size, outbound_size);
-
-  Layer *window_layer = window_get_root_layer(window);
-
   /*text_date_layer = text_layer_create(GRect(8, 68, 144-8, 168-68));
   text_layer_set_text_color(text_date_layer, GColorWhite);
   text_layer_set_background_color(text_date_layer, GColorClear);
@@ -151,7 +164,7 @@ void handle_init(void) {
   layer_set_update_proc(line_grid_layer, line_grid_layer_update_callback);
   layer_add_child(window_layer, line_grid_layer);
 
-  tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
+  //tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
   // TODO: Update display here to avoid blank display on launch?
 }
 
